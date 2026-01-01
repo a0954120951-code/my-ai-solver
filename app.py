@@ -4,90 +4,65 @@ import base64
 import os
 
 # --- 頁面設定 ---
-st.set_page_config(page_title="電工機械解題王(V4.0)", layout="centered")
+st.set_page_config(page_title="電工機械解題王", layout="centered")
 
-st.title("⚡ 電工機械解題王 (V4.0 核彈模式)")
-st.caption("啟用最高等級嚴格邏輯檢查，速度較慢但更準確。")
+st.title("⚡ 電工機械解題王 (V3.1 修正版)")
+st.caption("AI 輔助運算，請同學務必自行驗算數據")
 
 # --- 自動讀取鑰匙 ---
 if "GROQ_API_KEY" in st.secrets:
     api_key = st.secrets["GROQ_API_KEY"]
 else:
     st.warning("⚠️ 尚未偵測到 API Key")
+    st.info("請到 Streamlit 後台設定 Secrets")
     api_key = st.sidebar.text_input("或在此手動輸入 Groq API Key", type="password")
 
 # --- 處理圖片的函數 ---
 def encode_image(uploaded_file):
     return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
 
-# --- V4.0 核彈級指令 (The Nuclear Prompt) ---
-# 核心策略：強制結構化輸出，禁止心算，強制單位換算，變數明確化
+# --- 嚴格版 AI 指令 (核心修正) ---
 system_prompt = """
-Role: You are a pedantic, super-strict Professor of Electrical Machinery engineering. Your job is to solve exam problems with 100% mathematical precision.
+你是一位嚴謹的台灣高職「電工機械」教師。你的任務是精確解決學生上傳的考題。
+目前你的計算準確率不足，必須嚴格遵守以下思考流程 (Chain of Thought)：
 
-**CRITICAL RULE: DO NOT DO MENTAL MATH.**
-You are bad at mental math. You must write out every calculation step clearly so a human with a calculator can verify it.
+### 步驟 1：識別與提取 (OCR)
+1. 仔細閱讀圖片中的所有文字，特別是數字的指數部分 (例如 10^-3 與 10^-5)。
+2. **列出所有已知條件 (Given)**：
+   - 看到「雙分疊繞」：記住 a = 2P。
+   - 看到「雙分波繞」：記住 a = 2 × 2 = 4 (若m=2)。
+   - 看到「轉速 rad/s」：必須檢查是否需要換算成 rpm (N = 60ω / 2π)。
+   - 看到導磁係數：注意是相對導磁係數還是絕對導磁係數。
 
-**EXECUTION PROTOCOL (Follow strictly):**
+### 步驟 2：選擇公式與邏輯
+1. 寫出將使用的標準公式 (例如 E = P Z Φ N / 60 a)。
+2. 若是選擇題的觀念題（如換向、電樞反應），請先回想課本定義，對於每個選項進行「True/False」驗證，不要只憑直覺。
 
-**PHASE 1: IMAGE OCR & DATA EXTRACTION (The most important phase)**
-1. Read the image text carefully. Pay extreme attention to scientific notation (e.g., 10^-3 vs 10^-5).
-2. **Identify Key "Traps" (Keywords):**
-   - "雙分疊繞" (Double Lap): Set a = 2 * P.
-   - "單分疊繞" (Simplex Lap): Set a = P.
-   - "波繞" (Wave): Set a = 2 (usually).
-   - "轉速 N (rpm)" vs "角速度 ω (rad/s)": If given ω, N = 60*ω / (2π).
-   - "直徑 D" vs "半徑 r".
-   - "導磁係數 μ": Is it relative (μr) or absolute (μ)? μ = μr * μ0. (μ0 = 4π * 10^-7).
+### 步驟 3：逐步計算 (避免跳步)
+1. **不要直接給出最終答案**。
+2. 請像寫算式給小學生看一樣，把數字帶入公式。
+3. 遇到指數運算 (10的次方) 請特別小心，分開計算係數與指數。
+4. **檢查單位**：確保所有單位統一 (例如 cm 轉 m)。
 
-3. **List Structured Variables (SI Units Mandatory):**
-   - Extract every number and convert it to standard SI base units IMMEDIATELY.
-   - Example format:
-     - P (極數) = 4
-     - N_rpm (轉速) = 1200 rpm
-     - ω (角速度) = 1200 * 2 * 3.14159 / 60 = 125.66 rad/s  <-- YOU MUST WRITE THIS OUT
-     - D (直徑) = 50 cm = 0.5 m
-     - I (電流) = 10 A
+### 步驟 4：最終檢查
+1. 檢查算出的數字是否符合常理 (例如發電機電壓通常是 100V~220V，算出 0.4V 肯定錯了)。
+2. 回答格式：
+   - **題型分析**
+   - **已知條件**
+   - **詳細步驟** (含 LaTeX 公式)
+   - **最終答案** (清楚標示選項，如：(C))
 
-**PHASE 2: FORMULA SELECTION**
-1. State the standard textbook formula clearly using LaTeX format ($$...$$).
-2. Define what each variable in the formula represents.
-
-**PHASE 3: THE CALCULATION (The danger zone)**
-1. Plug the specific numbers into the formula. Do not simplify yet.
-   $$ E = \frac{4 \times 500 \times 0.02 \times 1200}{60 \times 4} $$
-2. **Simplify step-by-step.** Do not jump to the answer. Deal with exponents separately if needed.
-   Step 3.1 (Numerator): 4 * 500 * 0.02 * 1200 = ...
-   Step 3.2 (Denominator): 60 * 4 = ...
-   Step 3.3 (Final Division): ...
-3. State the final result with units.
-
-**PHASE 4: FINAL OUTPUT FORMAT (Traditional Chinese)**
-Please present the final output to the student in clear Traditional Chinese, following this structure:
-### 🎯 題目分析與陷阱識別
-(這裡列出你看到的關鍵字，如雙分疊繞，並說明其意義)
-### 🔢 已知條件 (化為基本單位)
-(列出變數清單)
-### 📐 選用公式
-(列出 LaTeX 公式)
-### 🧮 詳細計算過程
-(一步一步的算式，禁止跳步)
-### ✅ 最終答案
-(答案選項)
-
-Answer in Traditional Chinese only. Use LaTeX for math.
+請用繁體中文回答。數學公式用 Streamlit 支援的格式：$$ E = ... $$。
 """
 
 # --- 主程式 ---
 uploaded_file = st.file_uploader("📸 拍照或上傳題目", type=["jpg", "png", "jpeg"])
 
 if uploaded_file and api_key:
-    # 為了讓 AI 看得更清楚，這裡不縮圖，直接用原圖寬度傳送 (雖然介面會變醜一點)
-    # st.image(uploaded_file, caption="預覽題目", use_container_width=True) 
-    st.write("圖片已接收，準備進行精密分析...")
+    st.image(uploaded_file, caption="預覽題目", use_container_width=True)
     
-    if st.button("🚀 啟動核彈級詳解", type="primary"):
-        with st.spinner("⚠️ 正在進行精密運算，請耐心等候 (約需 15-30 秒)..."):
+    if st.button("🚀 開始詳解", type="primary"):
+        with st.spinner("AI 老師正在讀題並驗算中..."):
             try:
                 client = Groq(api_key=api_key)
                 base64_image = encode_image(uploaded_file)
@@ -95,42 +70,32 @@ if uploaded_file and api_key:
                 chat_completion = client.chat.completions.create(
                     messages=[
                         {
-                            "role": "system", # 這裡改用 system role，權重更高
-                            "content": system_prompt
-                        },
-                        {
                             "role": "user",
                             "content": [
-                                {"type": "text", "text": "請依照上面的嚴格協議分析這張圖片的題目。"},
+                                {"type": "text", "text": system_prompt},
                                 {
                                     "type": "image_url",
                                     "image_url": {
-                                        # 試圖傳送更高解析度 (如果 API 支援)
                                         "url": f"data:image/jpeg;base64,{base64_image}",
-                                        "detail": "high" 
                                     },
                                 },
                             ],
                         }
                     ],
-                    # 使用目前 Groq 上最強的推理+視覺模型
-                    model="llama-3.2-90b-vision-preview", 
-                    # 關鍵：Temperature 設為 0，強制 AI 不要有任何創造力，只能死板邏輯推理
-                    temperature=0.0, 
-                    # 限制最大輸出 token，防止它無限迴圈，但給夠用
-                    max_tokens=2048,
-                    # 核取樣設定，進一步限制隨機性
-                    top_p=0.1,
+                    # --- 修正重點：使用您之前測試成功的 Llama 4 Scout 模型 ---
+                    model="meta-llama/llama-4-scout-17b-16e-instruct", 
+                    temperature=0.1, # 極低隨機性，強迫它邏輯運算
                 )
                 
                 result = chat_completion.choices[0].message.content
-                st.markdown("---")
+                st.markdown("### 📝 解題分析")
                 st.markdown(result)
-                st.success("精密分析完成！")
-                st.error("⚠️ 重要提醒：即使是核彈模式，仍建議同學按計算機驗算關鍵步驟的數字！")
+                
+                # 加入免責聲明
+                st.warning("⚠️ AI 可能發生計算錯誤，請同學務必自行按計算機驗算一次！")
                 
             except Exception as e:
-                st.error(f"發生錯誤，可能是題目太模糊或運算超時：{str(e)}")
+                st.error(f"發生錯誤：{str(e)}")
 
 elif uploaded_file and not api_key:
     st.error("請先設定 API Key")
