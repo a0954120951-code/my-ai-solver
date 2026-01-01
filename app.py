@@ -7,39 +7,35 @@ import sys
 from io import StringIO
 import contextlib
 
-# --- 頁面設定 ---
-st.set_page_config(page_title="電工機械解題王 (V4.0 運算增強版)", layout="centered")
+# 頁面設定 (已修正為 centered)
+st.set_page_config(page_title="電工機械解題王 (V5.0)", layout="centered")
 
-st.title("⚡ 電工機械解題王 (V4.0)")
-st.caption("🚀 結合 AI 邏輯分析 + Python 精確運算")
+st.title("⚡ 電工機械解題王 (V5.0)")
+st.caption("🚀 使用最新 Llama 4 Scout 模型 + Python 運算驗證")
 
-# --- 自動讀取鑰匙 ---
+# 自動讀取鑰匙
 if "GROQ_API_KEY" in st.secrets:
     api_key = st.secrets["GROQ_API_KEY"]
 else:
     st.warning("⚠️ 尚未偵測到 API Key")
     api_key = st.sidebar.text_input("請輸入 Groq API Key", type="password")
 
-# --- 函數：處理圖片 ---
+# 函數：處理圖片
 def encode_image(uploaded_file):
     return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
 
-# --- 函數：執行 AI 產生的 Python 程式碼 ---
+# 函數：執行 Python 程式碼
 def execute_ai_code(code_str):
-    # 建立一個捕捉輸出的緩衝區
     output_buffer = StringIO()
-    
     try:
-        # 重新導向 stdout，這樣 print() 的結果才會被我們抓到
         with contextlib.redirect_stdout(output_buffer):
-            # 建立一個安全的執行環境 (字典)
             exec_globals = {}
             exec(code_str, exec_globals)
         return output_buffer.getvalue()
     except Exception as e:
         return f"運算錯誤: {str(e)}"
 
-# --- V4.0 核心指令：要求 AI 寫程式 ---
+# 系統指令
 system_prompt = """
 你是一位精通 Python 的電工機械教師。
 你的任務是：
@@ -67,6 +63,8 @@ print(f"答案: {E} V")
 
 看到「超前/滯後」：電壓調整率公式中，超前用減號(-)，滯後用加號(+)。
 
+變壓器阻抗換算：轉到高壓側要乘匝數比平方，轉到低壓側要除。
+
 輸出格式：
 
 題目分析：列出條件。
@@ -77,7 +75,7 @@ print(f"答案: {E} V")
 
 (Streamlit 會自動執行你的代碼並顯示結果) """
 
---- 主程式 ---
+主程式邏輯
 uploaded_file = st.file_uploader("📸 拍照或上傳題目", type=["jpg", "png", "jpeg"])
 
 if uploaded_file and api_key: st.image(uploaded_file, caption="預覽題目", use_container_width=True)
@@ -88,7 +86,7 @@ if st.button("🚀 開始詳解 (啟動 Python 運算)", type="primary"):
             client = Groq(api_key=api_key)
             base64_image = encode_image(uploaded_file)
             
-            # 1. 呼叫 AI
+            # 呼叫 AI
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
@@ -104,17 +102,18 @@ if st.button("🚀 開始詳解 (啟動 Python 運算)", type="primary"):
                         ],
                     }
                 ],
+                # 使用最新的 Llama 4 模型 (已加引號)
                 model="meta-llama/llama-4-scout-17b-16e-instruct", 
                 temperature=0.0,
             )
             
             full_response = chat_completion.choices[0].message.content
             
-            # 2. 顯示 AI 的文字分析
+            # 顯示文字分析
             st.markdown("### 📝 題目分析與思路")
             st.markdown(full_response)
             
-            # 3. 提取並執行 Python 程式碼
+            # 執行 Python 程式碼
             code_match = re.search(r'```python(.*?)```', full_response, re.DOTALL)
             
             if code_match:
