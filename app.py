@@ -57,3 +57,84 @@ P = 4
 N = 800
 ...
 print(f"答案: {E} V")
+特別注意陷阱：
+
+看到「雙分疊繞」：a = 2 * P
+
+看到「單分疊繞」：a = P
+
+看到「波繞」：a = 2 * m
+
+看到「超前/滯後」：電壓調整率公式中，超前用減號(-)，滯後用加號(+)。
+
+輸出格式：
+
+題目分析：列出條件。
+
+解題思路：解釋選用的公式。
+
+運算程式碼：提供 Python 代碼區塊。
+
+(Streamlit 會自動執行你的代碼並顯示結果) """
+
+--- 主程式 ---
+uploaded_file = st.file_uploader("📸 拍照或上傳題目", type=["jpg", "png", "jpeg"])
+
+if uploaded_file and api_key: st.image(uploaded_file, caption="預覽題目", use_container_width=True)
+
+if st.button("🚀 開始詳解 (啟動 Python 運算)", type="primary"):
+    with st.spinner("AI 正在分析邏輯並撰寫運算程式..."):
+        try:
+            client = Groq(api_key=api_key)
+            base64_image = encode_image(uploaded_file)
+            
+            # 1. 呼叫 AI
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": system_prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}",
+                                },
+                            },
+                        ],
+                    }
+                ],
+                model="meta-llama/llama-4-scout-17b-16e-instruct", 
+                temperature=0.0,
+            )
+            
+            full_response = chat_completion.choices[0].message.content
+            
+            # 2. 顯示 AI 的文字分析
+            st.markdown("### 📝 題目分析與思路")
+            st.markdown(full_response)
+            
+            # 3. 提取並執行 Python 程式碼
+            code_match = re.search(r'```python(.*?)```', full_response, re.DOTALL)
+            
+            if code_match:
+                code_to_run = code_match.group(1).strip()
+                
+                st.divider() 
+                st.markdown("### 💻 電腦精確運算結果")
+                st.info("以下是 AI 撰寫的運算程式，由系統自動執行：")
+                
+                st.code(code_to_run, language='python')
+                
+                calculated_result = execute_ai_code(code_to_run)
+                
+                if "運算錯誤" in calculated_result:
+                    st.error(calculated_result)
+                else:
+                    st.success(f"🧮 最終計算答案：\n\n{calculated_result}")
+            else:
+                st.warning("⚠️ AI 未生成可執行的程式碼，請參考上方的文字分析。")
+            
+        except Exception as e:
+            st.error(f"發生系統錯誤：{str(e)}")
+elif uploaded_file and not api_key: st.error("請先設定 API Key")
