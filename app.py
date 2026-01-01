@@ -38,7 +38,11 @@ if uploaded_file and api_key:
                         {
                             "role": "user",
                             "content": [
-                                {"type": "text", "text": "你是一位台灣高職電工機械老師。請分析這張圖片中的題目。1. 識別題型與已知條件。 2. 列出詳細解題步驟與公式 (用 LaTeX)。 3. 如果是電路圖，請指導如何分析。請用繁體中文回答。"},
+                                {
+                                    "type": "text", 
+                                    # --- 這裡我修改了提示詞，強制它使用 $$ 符號 ---
+                                    "text": "你是一位台灣高職電工機械老師。請分析這張圖片中的題目。1. 識別題型與已知條件。 2. 列出詳細解題步驟與公式。 3. 如果是電路圖，請指導如何分析。請用繁體中文回答。重要格式要求：所有的數學公式請務必使用 Streamlit 支援的 LaTeX 格式：獨立公式請用 $$ 包裹 (例如 $$E=IR$$)，行內公式請用 $ 包裹 (例如 $V$)，不要使用 \[ 或 \(。"
+                                },
                                 {
                                     "type": "image_url",
                                     "image_url": {
@@ -48,7 +52,6 @@ if uploaded_file and api_key:
                             ],
                         }
                     ],
-                    # --- 關鍵修正：加上引號，並使用最新的 Llama 4 Scout 模型 ---
                     model="meta-llama/llama-4-scout-17b-16e-instruct", 
                 )
                 
