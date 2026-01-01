@@ -4,7 +4,7 @@ from groq import Groq
 import base64
 
 # --- 頁面設定 ---
-st.set_page_config(page_title="電工機械解題王", layout="mobile")
+st.set_page_config(page_title="電工機械解題王", layout="centered")
 
 st.title("⚡ 電工機械解題王")
 st.write("上傳電路圖或題目，AI 幫你分析！")
