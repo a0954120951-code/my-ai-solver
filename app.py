@@ -52,7 +52,7 @@ if uploaded_file and api_key:
                             ],
                         }
                     ],
-                   model="llama-3.2-90b-vision-preview",
+                   meta-llama/llama-4-scout-17b-16e-instruct
                 )
                 
                 result = chat_completion.choices[0].message.content
