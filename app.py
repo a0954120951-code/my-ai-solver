@@ -7,20 +7,20 @@ import sys
 from io import StringIO
 import contextlib
 
-# --- 頁面設定 ---
+# --- 1. 頁面設定 ---
 st.set_page_config(page_title="電工機械解題王 (V5.0)", layout="centered")
 
 st.title("⚡ 電工機械解題王 (V5.0)")
 st.caption("🚀 最終修正版：Llama 4 模型 + Python 運算驗證")
 
-# --- 自動讀取 API Key ---
+# --- 2. 自動讀取 API Key ---
 if "GROQ_API_KEY" in st.secrets:
     api_key = st.secrets["GROQ_API_KEY"]
 else:
     st.warning("⚠️ 尚未偵測到 API Key")
     api_key = st.sidebar.text_input("請輸入 Groq API Key", type="password")
 
-# --- 核心函數 ---
+# --- 3. 核心函數定義 ---
 def encode_image(uploaded_file):
     """將圖片轉為 Base64"""
     return base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
@@ -35,7 +35,9 @@ def execute_ai_code(code_str):
         return output_buffer.getvalue()
     except Exception as e:
         return f"運算錯誤: {str(e)}"
-        # --- 設定 AI 指令 (System Prompt) ---
+
+# --- 4. 設定 AI 指令 (System Prompt) ---
+# 注意：為了避免複製錯誤，我簡化了這裡的範例格式，功能完全不變
 system_prompt = """
 你是一位精通 Python 的電工機械教師。任務：
 1. 分析圖片題目，提取已知條件。
@@ -46,35 +48,20 @@ system_prompt = """
 - 定義變數 (注意單位換算，如 cm 轉 m，rpm 轉 rad/s)。
 - 列出公式進行計算。
 - **最後一步務必使用 print() 函數印出最終答案與單位**。
-- 程式碼必須包含在 markdown 代碼區塊中 (即使用三個反引號包圍)。
+- 程式碼必須包含在 markdown 代碼區塊中。
 
-**範例格式**：
-```python
-P = 4
-print(f"答案: {P} 極")
-陷阱提示：
+**陷阱提示**：
+- 雙分疊繞 a=2P；單分疊繞 a=P；波繞 a=2m。
+- 電壓調整率：超前用減(-)，滯後用加(+)。
+- 變壓器阻抗換算：轉到高壓側要乘匝數比平方，轉到低壓側要除。
 
-雙分疊繞 a=2P；單分疊繞 a=P；波繞 a=2m。
+**輸出格式**：
+1. 題目分析
+2. 解題思路
+3. Python 程式碼區塊
+"""
 
-電壓調整率：超前用減(-)，滯後用加(+)。
-
-變壓器阻抗換算：轉到高壓側要乘匝數比平方，轉到低壓側要除。
-
-輸出格式：
-
-題目分析
-
-解題思路
-
-Python 程式碼區塊 """
-
----
-
-### 📋 第 3 段：主程式邏輯
-*(這是您之前一直沒複製到的部分，請貼在第 2 段的最後面)*
-
-```python
-# --- 主程式邏輯 ---
+# --- 5. 主程式邏輯 ---
 uploaded_file = st.file_uploader("📸 拍照或上傳題目", type=["jpg", "png", "jpeg"])
 
 if uploaded_file and api_key:
