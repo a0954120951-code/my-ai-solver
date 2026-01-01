@@ -1,6 +1,7 @@
 import streamlit as st
 from groq import Groq
 import base64
+import os
 
 # --- 頁面設定 ---
 st.set_page_config(page_title="電工機械解題王", layout="centered")
@@ -47,8 +48,8 @@ if uploaded_file and api_key:
                             ],
                         }
                     ],
-                    # --- 這裡已經幫您加上引號並使用正確模型 ---
-                    model="llama-3.2-90b-vision-preview", 
+                    # --- 關鍵修正：加上引號，並使用最新的 Llama 4 Scout 模型 ---
+                    model="meta-llama/llama-4-scout-17b-16e-instruct", 
                 )
                 
                 result = chat_completion.choices[0].message.content
